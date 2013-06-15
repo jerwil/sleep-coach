@@ -9,6 +9,7 @@
 const int LEDPin = 5;                  // IC leg 6 (PB1), output to red channel
 
 unsigned long currentTime;
+double milis_timer[1] = {0}; // This is use dto keep track of the timer used to tick for each second
 double second_timer[1] = {0}; // This is use dto keep track of the timer used to tick for each second
 int ticked = 0;
 
@@ -16,7 +17,12 @@ int delay_int = 1;
 int brightness = 0;
 double brightincrease = 1;
 double k = .028;
+double k_initial = 0.028;
+double k_final = 0.016;
 double x = 3*3.14159/2/k; // This starts it at 0 brightness
+
+double total_time = 420; // seconds for entire breathing coaching
+double current_time = 0;
 
 int button_state = 0;
 int button_pushed = 0; // This is the indicator that the button was pushed and released
@@ -39,10 +45,15 @@ Serial.println(brightness);
 Serial.print("X:");
 Serial.println(x);
   
-if (tick(delay_int,second_timer) == 1){
+if (tick(delay_int,milis_timer) == 1){
   x += brightincrease;
 }
-//if (brightness >= 255){brightincrease = -1;}
+if (tick(1000,second_timer) == 1){
+  current_time += 1;
+  Serial.print("current_time:");
+  Serial.println(current_time); 
+}
+if (x*k >= 2*3.14159){x=0;}
 //else if (brightness <= 0){brightincrease = 1;}
   analogWrite(LEDPin,brightness);
 }
