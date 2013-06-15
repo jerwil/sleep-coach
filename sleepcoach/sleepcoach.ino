@@ -1,5 +1,9 @@
+#include <math.h>
+
 
 // Sleep coach using ATTiny 85
+
+
 
 
 const int LEDPin = 5;                  // IC leg 6 (PB1), output to red channel
@@ -8,9 +12,11 @@ unsigned long currentTime;
 double second_timer[1] = {0}; // This is use dto keep track of the timer used to tick for each second
 int ticked = 0;
 
-int delay_int = 50;
+int delay_int = 1;
 int brightness = 0;
-int brightincrease = 1;
+double brightincrease = 1;
+double k = .028;
+double x = 3*3.14159/2/k; // This starts it at 0 brightness
 
 int button_state = 0;
 int button_pushed = 0; // This is the indicator that the button was pushed and released
@@ -20,17 +26,24 @@ int button_press_completed[1];    // storage for button press function
 
 void setup() {                
   // initialize the digital pin as an output.
-  pinMode(LEDPin, OUTPUT);      
+  pinMode(LEDPin, OUTPUT);
+  Serial.begin(9600);  
 }
 
 
 void loop() {
   
+brightness = 127*(1 + sin(k*x));
+Serial.print("Brightness:");
+Serial.println(brightness);
+Serial.print("X:");
+Serial.println(x);
+  
 if (tick(delay_int,second_timer) == 1){
-  brightness += brightincrease;
+  x += brightincrease;
 }
-if (brightness >= 255){brightincrease = -1;}
-else if (brightness <= 0){brightincrease = 1;}
+//if (brightness >= 255){brightincrease = -1;}
+//else if (brightness <= 0){brightincrease = 1;}
   analogWrite(LEDPin,brightness);
 }
 
