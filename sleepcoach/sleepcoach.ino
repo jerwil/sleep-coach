@@ -4,9 +4,25 @@
 // Sleep coach using ATTiny 85
 
 
+char* mode = "time_choose"; // Modes are time_choose, sleep_coach, and off
+// Time choose mode is where the user choses between 7, 14, 21, and 28 minutes of sleep coaching
+// sleep coach mode is the mode with pulsating light
+// off is when the sleep coaching is complete. A button press will bring it into time choose mode
 
+int time_choice = 7;
 
-const int LEDPin = 5;                  // IC leg 6 (PB1), output to red channel
+const int LED1Pin = 5;
+const int LED2Pin = 9;
+const int LED3Pin = 6;
+const int LED4Pin = 10;
+
+const int ButtonPin = 11;
+int button_state = 0;
+int button_pushed = 0; // This is the indicator that the button was pushed and released
+
+int blink_pattern[4] = {1,0,0,0}; // This is the indicator for the current time setting. It will blink 1 of 4 LEDs
+int blink = 1; // This is used for blinking the LEDs
+
 
 unsigned long currentTime;
 double milis_timer[1] = {0}; // This is use dto keep track of the timer used to tick for each second
@@ -24,20 +40,83 @@ double x = 3*3.14159/2/k; // This starts it at 0 brightness
 double total_time = 420; // seconds for entire breathing coaching
 double current_time = 0;
 
-int button_state = 0;
-int button_pushed = 0; // This is the indicator that the button was pushed and released
 int button_press_initiate[1];     // storage for button press function
 int button_press_completed[1];    // storage for button press function
 
 
 void setup() {                
   // initialize the digital pin as an output.
-  pinMode(LEDPin, OUTPUT);
+  pinMode(LED1Pin, OUTPUT);
+  pinMode(LED2Pin, OUTPUT);
+  pinMode(LED3Pin, OUTPUT);
+  pinMode(LED4Pin, OUTPUT);
+  pinMode(ButtonPin, INPUT);
   Serial.begin(9600);  
 }
 
 
 void loop() {
+  
+button_state = digitalRead(ButtonPin);  
+  
+if (mode == "time_choose"){
+  
+  if (time_choice == 7){
+    blink_pattern[0] = 1;
+    blink_pattern[1] = 0;
+    blink_pattern[2] = 0;
+    blink_pattern[3] = 0;
+  }
+  if (time_choice == 14){
+    blink_pattern[0] = 0;
+    blink_pattern[1] = 1;
+    blink_pattern[2] = 0;
+    blink_pattern[3] = 0;
+  }
+  if (time_choice == 21){
+    blink_pattern[0] = 0;
+    blink_pattern[1] = 0;
+    blink_pattern[2] = 1;
+    blink_pattern[3] = 0;
+  }
+  if (time_choice == 28){
+    blink_pattern[0] = 0;
+    blink_pattern[1] = 0;
+    blink_pattern[2] = 0;
+    blink_pattern[3] = 1;
+  }
+ 
+if (tick(1000,second_timer) == 1){
+ if (blink == 1){blink = 0;}
+ else if (blink == 0){blink = 1;} 
+}
+
+if (blink == 0){
+digitalWrite(LED1Pin, LOW);
+digitalWrite(LED2Pin, LOW);
+digitalWrite(LED3Pin, LOW);
+digitalWrite(LED4Pin, LOW);
+
+}
+
+if (blink_pattern[0] == 1){
+digitalWrite(LED1Pin, HIGH);
+}
+if (blink_pattern[1] == 1){
+digitalWrite(LED2Pin, HIGH);
+}
+if (blink_pattern[2] == 1){
+digitalWrite(LED3Pin, HIGH);
+}
+if (blink_pattern[3] == 1){
+digitalWrite(LED4Pin, HIGH);
+}
+ 
+}
+  
+if (mode == "sleep_coach"){
+  
+if (current_time >= total_time){mode = "off";}
   
 brightness = 127*(1 + sin(k*x));
 Serial.print("Brightness:");
@@ -52,10 +131,22 @@ if (tick(1000,second_timer) == 1){
   current_time += 1;
   Serial.print("current_time:");
   Serial.println(current_time); 
+  k = k_initial + current_time*(k_final-k_initial)/total_time;
 }
 if (x*k >= 2*3.14159){x=0;}
 //else if (brightness <= 0){brightincrease = 1;}
-  analogWrite(LEDPin,brightness);
+  analogWrite(LED1Pin,brightness);
+  analogWrite(LED2Pin,brightness);
+  analogWrite(LED3Pin,brightness);
+  analogWrite(LED4Pin,brightness);
+}
+
+if (mode == "off"){
+  
+button_pushed = button_press (button_state, button_press_initiate, button_press_completed);
+  
+}
+
 }
 
 int button_press (int button_indicator, int button_press_initiated[1], int button_press_complete[1]){
