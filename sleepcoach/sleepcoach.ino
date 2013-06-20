@@ -19,14 +19,16 @@ const int LED4Pin = 10;
 const int ButtonPin = 11;
 int button_state = 0;
 int button_pushed = 0; // This is the indicator that the button was pushed and released
+int button_counter = 0; // This is used to detect how long the button is held for
 
 int blink_pattern[4] = {1,0,0,0}; // This is the indicator for the current time setting. It will blink 1 of 4 LEDs
 int blink = 1; // This is used for blinking the LEDs
 
 
 unsigned long currentTime;
-double milis_timer[1] = {0}; // This is use dto keep track of the timer used to tick for each second
-double second_timer[1] = {0}; // This is use dto keep track of the timer used to tick for each second
+double milis_timer[1] = {0}; // This is used to keep track of the timer used to tick for each milisecond
+double second_timer[1] = {0}; // This is used to keep track of the timer used to tick for each second
+double blink_timer[1] = {0};  // This is used to keep track of each half second for blinking
 int ticked = 0;
 
 int delay_int = 1;
@@ -37,7 +39,7 @@ double k_initial = 0.028;
 double k_final = 0.016;
 double x = 3*3.14159/2/k; // This starts it at 0 brightness
 
-double total_time = 420; // seconds for entire breathing coaching
+double total_time = 10; // seconds for entire breathing coaching
 double current_time = 0;
 
 int button_press_initiate[1];     // storage for button press function
@@ -56,6 +58,9 @@ void setup() {
 
 
 void loop() {
+
+Serial.println(mode);
+Serial.println(button_counter);
   
 button_state = digitalRead(ButtonPin);
 button_pushed = button_press (button_state, button_press_initiate, button_press_completed);
@@ -97,25 +102,37 @@ if (time_choice > 28){time_choice = 7;}
   }
  
 if (tick(1000,second_timer) == 1){
- if (blink == 1){blink = 0;}
- else if (blink == 0){blink = 1;} 
+if (button_state == 1){button_counter += 1;} 
 }
 
-if (button_state == 1){blink = 1;}
+if (button_state == 0){button_counter = 0;}
 
-if (blink == 0){
-  
+if (tick(500,blink_timer) == 1){
+ if (blink == 1){blink = 0;}
+ else if (blink == 0){blink = 1;}
+}
+
+if (button_state == 1){
+blink = 1;
+}
+
+if (blink == 0){  
   blink_pattern[0] = 0;
   blink_pattern[1] = 0;
   blink_pattern[2] = 0;
   blink_pattern[3] = 0;
-
 }
 
 analogWrite(LED1Pin,  blink_pattern[0]);
 analogWrite(LED2Pin,  blink_pattern[1]);
 analogWrite(LED3Pin,  blink_pattern[2]);
 analogWrite(LED4Pin,  blink_pattern[3]);
+
+if (button_counter >= 3){ // If th4e user holds the button for 3 seconds, start the sleep coach
+button_pushed = 0;
+mode = "sleep_coach";
+button_counter = 0;
+}
  
 }
   
@@ -124,10 +141,6 @@ if (mode == "sleep_coach"){
 if (current_time >= total_time){mode = "off";}
   
 brightness = 127*(1 + sin(k*x));
-Serial.print("Brightness:");
-Serial.println(brightness);
-Serial.print("X:");
-Serial.println(x);
   
 if (tick(delay_int,milis_timer) == 1){
   x += brightincrease;
@@ -144,11 +157,37 @@ if (x*k >= 2*3.14159){x=0;}
   analogWrite(LED2Pin,brightness);
   analogWrite(LED3Pin,brightness);
   analogWrite(LED4Pin,brightness);
+  
+if (tick(1000,second_timer) == 1){ 
+if (button_state == 1){button_counter += 1;} 
+}
+
+if (button_state == 0){button_counter = 0;}
+
+if (button_counter >= 3){ // The user can turn the unit off while in sleep coach mode by holding down the button
+button_pushed = 0;
+mode = "off";
+button_counter = 0;
+Serial.println("I was in sleep coach now I turn off");
+}
+
 }
 
 if (mode == "off"){
   
-button_pushed = button_press (button_state, button_press_initiate, button_press_completed);
+analogWrite(LED1Pin,  0);
+analogWrite(LED2Pin,  0);
+analogWrite(LED3Pin,  0);
+analogWrite(LED4Pin,  0);
+  
+
+delay(1);
+
+if (button_pushed == 1){ // Turn the device on by pushing the button
+mode = "time_choose";
+button_pushed = 0;
+button_counter = 0;
+}
   
 }
 
@@ -174,4 +213,9 @@ if(currentTime >= (timekeeper[0] + delay)){
 	return 1;
   }
 else {return 0;}
+}
+
+void tick_reset(double timekeeper[1]){
+currentTime = millis();
+timekeeper[0] = currentTime;
 }
