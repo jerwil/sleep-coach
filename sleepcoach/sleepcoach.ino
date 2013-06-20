@@ -57,33 +57,43 @@ void setup() {
 
 void loop() {
   
-button_state = digitalRead(ButtonPin);  
+button_state = digitalRead(ButtonPin);
+button_pushed = button_press (button_state, button_press_initiate, button_press_completed);
   
 if (mode == "time_choose"){
   
+delay(1);
+
+if (button_pushed == 1){
+time_choice += 7;
+//Serial.println("Time changed!");
+button_pushed = 0;
+}
+if (time_choice > 28){time_choice = 7;}
+  
   if (time_choice == 7){
-    blink_pattern[0] = 1;
+    blink_pattern[0] = 254;
     blink_pattern[1] = 0;
     blink_pattern[2] = 0;
     blink_pattern[3] = 0;
   }
   if (time_choice == 14){
     blink_pattern[0] = 0;
-    blink_pattern[1] = 1;
+    blink_pattern[1] = 254;
     blink_pattern[2] = 0;
     blink_pattern[3] = 0;
   }
   if (time_choice == 21){
     blink_pattern[0] = 0;
     blink_pattern[1] = 0;
-    blink_pattern[2] = 1;
+    blink_pattern[2] = 254;
     blink_pattern[3] = 0;
   }
   if (time_choice == 28){
     blink_pattern[0] = 0;
     blink_pattern[1] = 0;
     blink_pattern[2] = 0;
-    blink_pattern[3] = 1;
+    blink_pattern[3] = 254;
   }
  
 if (tick(1000,second_timer) == 1){
@@ -91,26 +101,21 @@ if (tick(1000,second_timer) == 1){
  else if (blink == 0){blink = 1;} 
 }
 
+if (button_state == 1){blink = 1;}
+
 if (blink == 0){
-digitalWrite(LED1Pin, LOW);
-digitalWrite(LED2Pin, LOW);
-digitalWrite(LED3Pin, LOW);
-digitalWrite(LED4Pin, LOW);
+  
+  blink_pattern[0] = 0;
+  blink_pattern[1] = 0;
+  blink_pattern[2] = 0;
+  blink_pattern[3] = 0;
 
 }
 
-if (blink_pattern[0] == 1){
-digitalWrite(LED1Pin, HIGH);
-}
-if (blink_pattern[1] == 1){
-digitalWrite(LED2Pin, HIGH);
-}
-if (blink_pattern[2] == 1){
-digitalWrite(LED3Pin, HIGH);
-}
-if (blink_pattern[3] == 1){
-digitalWrite(LED4Pin, HIGH);
-}
+analogWrite(LED1Pin,  blink_pattern[0]);
+analogWrite(LED2Pin,  blink_pattern[1]);
+analogWrite(LED3Pin,  blink_pattern[2]);
+analogWrite(LED4Pin,  blink_pattern[3]);
  
 }
   
