@@ -39,7 +39,7 @@ double k_initial = 0.028;
 double k_final = 0.016;
 double x = 3*3.14159/2/k; // This starts it at 0 brightness
 
-double total_time = 10; // seconds for entire breathing coaching
+double total_time = 420; // seconds for entire breathing coaching
 double current_time = 0;
 
 int button_press_initiate[1];     // storage for button press function
@@ -53,14 +53,11 @@ void setup() {
   pinMode(LED3Pin, OUTPUT);
   pinMode(LED4Pin, OUTPUT);
   pinMode(ButtonPin, INPUT);
-  Serial.begin(9600);  
+//  Serial.begin(9600);  
 }
 
 
 void loop() {
-
-Serial.println(mode);
-Serial.println(button_counter);
   
 button_state = digitalRead(ButtonPin);
 button_pushed = button_press (button_state, button_press_initiate, button_press_completed);
@@ -128,7 +125,7 @@ analogWrite(LED2Pin,  blink_pattern[1]);
 analogWrite(LED3Pin,  blink_pattern[2]);
 analogWrite(LED4Pin,  blink_pattern[3]);
 
-if (button_counter >= 3){ // If th4e user holds the button for 3 seconds, start the sleep coach
+if (button_counter >= 3){ // If the user holds the button for 3 seconds, start the sleep coach
 button_pushed = 0;
 mode = "sleep_coach";
 button_counter = 0;
@@ -138,7 +135,10 @@ button_counter = 0;
   
 if (mode == "sleep_coach"){
   
-if (current_time >= total_time){mode = "off";}
+if (current_time >= total_time){
+current_time = 0;
+mode = "off";
+}
   
 brightness = 127*(1 + sin(k*x));
   
@@ -147,9 +147,10 @@ if (tick(delay_int,milis_timer) == 1){
 }
 if (tick(1000,second_timer) == 1){
   current_time += 1;
-  Serial.print("current_time:");
-  Serial.println(current_time); 
+//  Serial.print("current_time:");
+//  Serial.println(current_time); 
   k = k_initial + current_time*(k_final-k_initial)/total_time;
+  if (button_state == 1){button_counter += 1;} 
 }
 if (x*k >= 2*3.14159){x=0;}
 //else if (brightness <= 0){brightincrease = 1;}
@@ -157,18 +158,14 @@ if (x*k >= 2*3.14159){x=0;}
   analogWrite(LED2Pin,brightness);
   analogWrite(LED3Pin,brightness);
   analogWrite(LED4Pin,brightness);
-  
-if (tick(1000,second_timer) == 1){ 
-if (button_state == 1){button_counter += 1;} 
-}
 
 if (button_state == 0){button_counter = 0;}
 
 if (button_counter >= 3){ // The user can turn the unit off while in sleep coach mode by holding down the button
-button_pushed = 0;
 mode = "off";
+button_pushed = 0;
 button_counter = 0;
-Serial.println("I was in sleep coach now I turn off");
+//Serial.println("I was in sleep coach now I turn off");
 }
 
 }
@@ -190,6 +187,13 @@ button_counter = 0;
 }
   
 }
+
+//Serial.print("Mode: ");
+//Serial.print(mode);
+//Serial.print("Button counter:");
+//Serial.print(button_counter);
+//Serial.print("Button pushed:");
+//Serial.println(button_pushed);
 
 }
 
