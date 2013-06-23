@@ -34,9 +34,9 @@ int ticked = 0;
 int delay_int = 1;
 int brightness = 0;
 double brightincrease = 1;
-double k = .028;
-double k_initial = 0.028;
-double k_final = 0.016;
+double k = 0.00108;
+double k_initial = 0.00108;
+double k_final = 0.00065;
 double x = 3*3.14159/2/k; // This starts it at 0 brightness
 
 double total_time = 420; // seconds for entire breathing coaching
@@ -78,24 +78,32 @@ if (time_choice > 28){time_choice = 7;}
     blink_pattern[1] = 0;
     blink_pattern[2] = 0;
     blink_pattern[3] = 0;
+    k_final = 0.00065; // Equates to 10 second breath cycle
+    total_time = 420;
   }
   if (time_choice == 14){
     blink_pattern[0] = 0;
     blink_pattern[1] = 254;
     blink_pattern[2] = 0;
     blink_pattern[3] = 0;
+    k_final = 0.00056; // Equates to 12 second breath cycle
+    total_time = 840;
   }
   if (time_choice == 21){
     blink_pattern[0] = 0;
     blink_pattern[1] = 0;
     blink_pattern[2] = 254;
     blink_pattern[3] = 0;
+    k_final = 0.00046; // Equates to 14 second breath cycle
+    total_time = 1260;
   }
   if (time_choice == 28){
     blink_pattern[0] = 0;
     blink_pattern[1] = 0;
     blink_pattern[2] = 0;
     blink_pattern[3] = 254;
+    k_final = 0.000406; // Equates to 16 second breath cycle
+    total_time = 1680;
   }
  
 if (tick(1000,second_timer) == 1){
@@ -138,6 +146,7 @@ if (mode == "sleep_coach"){
 if (current_time >= total_time){
 current_time = 0;
 mode = "off";
+x = 0;
 }
   
 brightness = 127*(1 + sin(k*x));
@@ -161,11 +170,10 @@ if (x*k >= 2*3.14159){x=0;}
 
 if (button_state == 0){button_counter = 0;}
 
-if (button_counter >= 3){ // The user can turn the unit off while in sleep coach mode by holding down the button
+if (button_pushed == 1 && current_time > 5){ // Turn the device off by pushing the button, but do not create false press after starting
 mode = "off";
 button_pushed = 0;
 button_counter = 0;
-//Serial.println("I was in sleep coach now I turn off");
 }
 
 }
