@@ -21,6 +21,9 @@ int button_state = 0;
 int button_pushed = 0; // This is the indicator that the button was pushed and released
 int button_counter = 0; // This is used to detect how long the button is held for
 
+#define potPin 5 // Pin for potentiometer
+int pot_val; // Value of potentiometer reading
+
 int blink_pattern[4] = {1,0,0,0}; // This is the indicator for the current time setting. It will blink 1 of 4 LEDs
 int blink = 1; // This is used for blinking the LEDs
 
@@ -33,6 +36,7 @@ int ticked = 0;
 
 int delay_int = 1;
 int brightness = 0;
+int max_brightness = 244;
 double brightincrease = 1;
 double k = 0.00108;
 double k_initial = 0.00108;
@@ -59,22 +63,25 @@ void setup() {
 
 void loop() {
   
+pot_val = analogRead(potPin);
+
+max_brightness = pot_val/(1024/254);
+
 button_state = digitalRead(ButtonPin);
 button_pushed = button_press (button_state, button_press_initiate, button_press_completed);
   
 if (mode == "time_choose"){
   
-delay(1);
+delay(10);
 
 if (button_pushed == 1){
 time_choice += 7;
-//Serial.println("Time changed!");
 button_pushed = 0;
 }
 if (time_choice > 28){time_choice = 7;}
   
   if (time_choice == 7){
-    blink_pattern[0] = 254;
+    blink_pattern[0] = max_brightness;
     blink_pattern[1] = 0;
     blink_pattern[2] = 0;
     blink_pattern[3] = 0;
@@ -83,7 +90,7 @@ if (time_choice > 28){time_choice = 7;}
   }
   if (time_choice == 14){
     blink_pattern[0] = 0;
-    blink_pattern[1] = 254;
+    blink_pattern[1] = max_brightness;
     blink_pattern[2] = 0;
     blink_pattern[3] = 0;
     k_final = 0.00056; // Equates to 12 second breath cycle
@@ -92,7 +99,7 @@ if (time_choice > 28){time_choice = 7;}
   if (time_choice == 21){
     blink_pattern[0] = 0;
     blink_pattern[1] = 0;
-    blink_pattern[2] = 254;
+    blink_pattern[2] = max_brightness;
     blink_pattern[3] = 0;
     k_final = 0.00046; // Equates to 14 second breath cycle
     total_time = 1260;
@@ -101,7 +108,7 @@ if (time_choice > 28){time_choice = 7;}
     blink_pattern[0] = 0;
     blink_pattern[1] = 0;
     blink_pattern[2] = 0;
-    blink_pattern[3] = 254;
+    blink_pattern[3] = max_brightness;
     k_final = 0.000406; // Equates to 16 second breath cycle
     total_time = 1680;
   }
@@ -149,15 +156,13 @@ mode = "off";
 x = 0;
 }
   
-brightness = 127*(1 + sin(k*x));
+brightness = max_brightness/2*(1 + sin(k*x));
   
 if (tick(delay_int,milis_timer) == 1){
   x += brightincrease;
 }
 if (tick(1000,second_timer) == 1){
   current_time += 1;
-//  Serial.print("current_time:");
-//  Serial.println(current_time); 
   k = k_initial + current_time*(k_final-k_initial)/total_time;
   if (button_state == 1){button_counter += 1;} 
 }
@@ -174,6 +179,8 @@ if (button_pushed == 1 && current_time > 5){ // Turn the device off by pushing t
 mode = "off";
 button_pushed = 0;
 button_counter = 0;
+current_time = 0;
+x = 3*3.14159/2/k; // Start it back at 0 brightness
 }
 
 }
@@ -193,15 +200,10 @@ mode = "time_choose";
 button_pushed = 0;
 button_counter = 0;
 }
+
+current_time = 0;
   
 }
-
-//Serial.print("Mode: ");
-//Serial.print(mode);
-//Serial.print("Button counter:");
-//Serial.print(button_counter);
-//Serial.print("Button pushed:");
-//Serial.println(button_pushed);
 
 }
 
